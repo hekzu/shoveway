@@ -3,6 +3,7 @@ from flask import Flask, Response, request
 from argparse import ArgumentParser
 from storage import MetricStore
 from sample import Sample
+import schedule
 import json
 
 
@@ -33,9 +34,9 @@ class GenericCollector(object):
         self.store = MetricStore()
 
     def collect(self):
-        for job, metric in self.store:
+        for job, sample_list in self.store:
             prometheus_metric = Metric(job, "Metric set from collector module", "summary")
-            for metric_sample in metric:
+            for metric_sample in sample_list:
                 metric_name, metric_value, metric_labels = metric_sample.values()
                 prometheus_metric.add_sample(metric_name, metric_labels, metric_value)
             yield prometheus_metric

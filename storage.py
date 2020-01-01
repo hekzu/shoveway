@@ -1,6 +1,7 @@
-from multiprocessing import Process
+from threading import Thread, Event
 from singleton import singleton
 from sample import Sample
+import schedule
 import json
 import time
 import os
@@ -9,7 +10,7 @@ import os
 STORE_FILE_PATH = "store.json"
 READ_MODE = "r"
 WRITE_MODE = "w"
-FLUSH_INTERVAL_SECONDS = 60
+FLUSH_INTERVAL_SECONDS = 5
 
 
 class MetricStoreIterator(object):
@@ -22,6 +23,7 @@ class MetricStoreIterator(object):
         if self._index >= len(self._jobs):
             raise StopIteration
         job = self._jobs[self._index]
+        self._index += 1
         return job, self._store.get(job)
 
 
@@ -32,13 +34,24 @@ class MetricStore(object):
         if self.persist:
             store_dump = self.__read__()
             self.store = store_dump if store_dump else {}
-            self.flush_store_thread = Process(target=self.__flush__)
-            self.flush_store_thread.start()
+            schedule.every(FLUSH_INTERVAL_SECONDS).seconds.do(self.__flush__)
+
+            self.__run_event = Event()
+            self.__run_event.set()
+
+            self.__schedule_thread = Thread(target=self.__run_pending__, args=(self.__run_event, ))
+            self.__schedule_thread.start()
         else:
             self.store = {}
 
     def __iter__(self):
         return MetricStoreIterator(self)
+
+    @staticmethod
+    def __run_pending__(run_event):
+        while run_event.is_set():
+            schedule.run_pending()
+            time.sleep(FLUSH_INTERVAL_SECONDS)
 
     def __read__(self):
         loaded_store = {}
@@ -49,15 +62,13 @@ class MetricStore(object):
         return loaded_store
 
     def __flush__(self):
-        while True:
-            store_dict = {}
-            job_list = self.jobs()
-            for job in job_list:
-                sample_list = self.get(job)
-                store_dict[job] = [sample.to_json() for sample in sample_list]
+        store_dict = {}
+        job_list = self.jobs()
+        for job in job_list:
+            sample_list = self.get(job)
+            store_dict[job] = [sample.to_json() for sample in sample_list]
 
-            self.__dump_to_disk__(store_dict)
-            time.sleep(FLUSH_INTERVAL_SECONDS)
+        self.__dump_to_disk__(store_dict)
 
     @staticmethod
     def __load_from_disk__():
