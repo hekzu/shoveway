@@ -1,5 +1,5 @@
+from singleton_decorator import singleton
 from threading import Thread, Event
-from singleton import singleton
 from sample import Sample
 import schedule
 import json
