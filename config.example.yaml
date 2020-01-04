@@ -3,3 +3,13 @@ flask:
   host: "0.0.0.0"
   threaded: true
   use_reloader: false
+cluster:
+  nodes:
+    - "http://localhost:9001"
+    - "http://localhost:9002"
+node:
+  persist: true
+  name: "first_node"
+  log:
+    path: "/logs"
+    handler: "rotate"
