@@ -1,4 +1,3 @@
-from singleton_decorator import singleton
 import yaml
 
 
@@ -30,7 +29,6 @@ PATH_KEY = 'path'
 HANDLER_KEY = 'handler'
 
 
-@singleton
 class Configuration(object):
     def __init__(self, path=DEFAULT_CONFIG_PATH):
         self.__stream__ = open(path, READ_MODE)
