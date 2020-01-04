@@ -1,0 +1,5 @@
+flask:
+  port: 9000
+  host: "0.0.0.0"
+  threaded: true
+  use_reloader: false
