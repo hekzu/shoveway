@@ -1,4 +1,4 @@
-from singleton import singleton
+from singleton_decorator import singleton
 import yaml
 
 
