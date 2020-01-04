@@ -3,7 +3,6 @@ from flask import Flask, Response, request
 from argparse import ArgumentParser
 from storage import MetricStore
 from sample import Sample
-import schedule
 import json
 
 
@@ -29,7 +28,7 @@ def receive_sample(job):
     return Response(status=200)
 
 
-class GenericCollector(object):
+class StoreCollector(object):
     def __init__(self):
         self.store = MetricStore()
 
@@ -43,7 +42,7 @@ class GenericCollector(object):
 
 
 def main(arguments):
-    collector = GenericCollector()
+    collector = StoreCollector()
     REGISTRY.register(collector)
 
     try:
