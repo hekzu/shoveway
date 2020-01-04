@@ -1,5 +1,6 @@
-from prometheus_client import REGISTRY, Metric, generate_latest
+from prometheus_client import REGISTRY, generate_latest
 from flask import Flask, Response, request
+from collector import StoreCollector
 from argparse import ArgumentParser
 from storage import MetricStore
 from sample import Sample
@@ -7,7 +8,6 @@ import json
 
 
 app = Flask(__name__)
-store = MetricStore(persist=True)
 
 
 @app.route('/metrics', methods=['GET'])
@@ -28,20 +28,9 @@ def receive_sample(job):
     return Response(status=200)
 
 
-class StoreCollector(object):
-    def __init__(self):
-        self.store = MetricStore()
-
-    def collect(self):
-        for job, sample_list in self.store:
-            prometheus_metric = Metric(job, "Metric set from collector module", "summary")
-            for metric_sample in sample_list:
-                metric_name, metric_value, metric_labels = metric_sample.values()
-                prometheus_metric.add_sample(metric_name, metric_labels, metric_value)
-            yield prometheus_metric
-
-
 def main(arguments):
+    store = MetricStore(persist=True)
+    global store
     collector = StoreCollector()
     REGISTRY.register(collector)
 
